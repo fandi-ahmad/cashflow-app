@@ -1,4 +1,4 @@
-import { StyleSheet, View, Text, ScrollView } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, Image } from 'react-native';
 import { TabBarIcon } from '@/components/navigation/TabBarIcon';
 
 export default function HomeScreen() {
@@ -83,37 +83,24 @@ export default function HomeScreen() {
 
         <View style={styles.newsCard}>
           <Text style={styles.textSmall}>
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Molestiae, temporibus...
+            Lorem, ipsum dolor sit amet consectetur adipisicing elit. Unde, veritatis! Nostrum, soluta fugit quia harum voluptate cum repellendus ut esse...
             <Text style={styles.textBlue}>  see more</Text>
           </Text>
+          <Image
+            source={require('@/assets/images/news-img-1.jpg')}
+            style={styles.newsImage}
+          />
         </View>
 
         <View style={styles.newsCard}>
           <Text style={styles.textSmall}>
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Molestiae, temporibus...
+            Lorem, ipsum dolor sit amet consectetur adipisicing elit. Unde, veritatis! Nostrum, soluta fugit quia harum voluptate cum repellendus ut esse...
             <Text style={styles.textBlue}>  see more</Text>
           </Text>
-        </View>
-
-        <View style={styles.newsCard}>
-          <Text style={styles.textSmall}>
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Molestiae, temporibus...
-            <Text style={styles.textBlue}>  see more</Text>
-          </Text>
-        </View>
-
-        <View style={styles.newsCard}>
-          <Text style={styles.textSmall}>
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Molestiae, temporibus...
-            <Text style={styles.textBlue}>  see more</Text>
-          </Text>
-        </View>
-
-        <View style={styles.newsCard}>
-          <Text style={styles.textSmall}>
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Molestiae, temporibus...
-            <Text style={styles.textBlue}>  see more</Text>
-          </Text>
+          <Image
+            source={require('@/assets/images/news-img-1.jpg')}
+            style={styles.newsImage}
+          />
         </View>
 
       </View>
@@ -206,6 +193,15 @@ const styles = StyleSheet.create({
     borderColor: '#b5b5b5',
     borderRadius: 4,
     padding: 8,
-    marginBottom: 12
+    marginBottom: 12,
+    display: 'flex',
+    flexDirection: 'row',
+    gap: 10
+  },
+  newsImage: {
+    height: 80,
+    width: 160,
+    borderRadius: 2,
+    objectFit: 'cover'
   }
 });

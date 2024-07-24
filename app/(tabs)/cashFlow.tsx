@@ -2,48 +2,129 @@ import { StyleSheet, View, Text, ScrollView, Pressable, TextInput } from 'react-
 import { TabBarIcon } from '@/components/navigation/TabBarIcon';
 import Modal from 'react-native-modal'
 import { useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function CashFlowScreen() {
   const [isModalVisible, setModalVisible] = useState(false);
   const [cashActionText, setCashActionText] = useState('')
+  const [amountCash, setAmountCash] = useState('')
+  const [typeCash, setTypeCash] = useState('')
+  const [exampleData, setExampleData] = useState([
+    {
+      id: 1,
+      amount: 50000,
+      type: 'income',
+      created_at: '16:01, 23/07/2024'
+    },
+    {
+      id: 2,
+      amount: 85000,
+      type: 'spending',
+      created_at: '10:41, 22/07/2024'
+    }
+  ])
 
-  const toggleModal = (actionType = '') => {
-    setModalVisible(!isModalVisible);
+  const showModalandSetType = (actionType = '', typeCash: string) => {
     setCashActionText(actionType)
+    setTypeCash(typeCash)
+    toggleModal()
+  }
+
+  const closeModal = () => {
+    setAmountCash('')
+    toggleModal()
+  }
+
+  const toggleModal = () => {
+    setModalVisible(!isModalVisible);
   };
+
+  const cashFomat = (value: number) => {
+    return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  }
+
+  function generateUniqueId() {
+    const now = new Date();
+    
+    const year = now.getFullYear().toString();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    const milliseconds = String(now.getMilliseconds()).padStart(3, '0');
+    
+    // Menggabungkan semua bagian menjadi string unik
+    const uniqueId = `${year}${month}${day}${hours}${minutes}${seconds}${milliseconds}`;
+    
+    return uniqueId;
+  }
+  
+  const getCurrentDateTime = () => {
+    const now = new Date();
+  
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+  
+    return `${hours}:${minutes}, ${day}/${month}/${year}`
+  }
+
+  const actionForCashFlow = () => {
+    const id = generateUniqueId()
+    const currentTime = getCurrentDateTime()
+
+    console.log({
+      id: id,
+      amount: Number(amountCash),
+      type: typeCash,
+      created_at: currentTime
+    })
+
+
+
+    // toggleModal()
+  }
 
   return (
     <ScrollView>
 
       <Modal isVisible={isModalVisible}>
         <View style={styles.modalContainer}>
-          <Pressable onPress={() => toggleModal()} style={{display: 'flex', justifyContent: 'flex-end', flexDirection: 'row', marginBottom: 20}}>
-            <TabBarIcon name={'close-circle'} />
-          </Pressable>
+          <View style={{display: 'flex', justifyContent: 'flex-end', flexDirection: 'row', marginBottom: 20}}>
+            <Pressable onPress={closeModal}>
+              <TabBarIcon name={'close-circle'} />
+            </Pressable>
+          </View>
 
-          <TextInput placeholder='0' keyboardType='numeric' style={styles.inputField} />
+          <TextInput
+            placeholder='0' keyboardType='numeric' style={styles.inputField}
+            value={amountCash}
+            onChangeText={newAmount => setAmountCash(newAmount.replace(/[^0-9]/g, ''))}
+          />
 
           <View style={{marginBottom: 20}}></View>
 
           <Pressable
             style={[styles.cashButton, cashActionText === 'Add Income' ? styles.bgGreen : styles.bgRed]}
-            onPress={() => toggleModal()}
+            onPress={actionForCashFlow}
           >
             <Text style={[styles.textWhite, {textAlign: 'center'}]}>{cashActionText}</Text>
           </Pressable>
           
-
         </View>
       </Modal>
       
       <View style={styles.container}>
         <View style={styles.cashButtonContainer}>
 
-          <Pressable style={[styles.cashButton, styles.bgGreen]} onPress={() => toggleModal('Add Income')}>
+          <Pressable style={[styles.cashButton, styles.bgGreen]} onPress={() => showModalandSetType('Add Income', 'income')}>
             <Text style={styles.textWhite}>Add Income</Text>
           </Pressable>
 
-          <Pressable style={[styles.cashButton, styles.bgRed]} onPress={() => toggleModal('Add Spending')}>
+          <Pressable style={[styles.cashButton, styles.bgRed]} onPress={() => showModalandSetType('Add Spending', 'spending')}>
             <Text style={styles.textWhite}>Add Spending</Text>
           </Pressable>
 
@@ -55,26 +136,25 @@ export default function CashFlowScreen() {
       <View style={styles.container}>
         <Text style={styles.textMenu}>Cash Flow</Text>
 
-        <View style={styles.borderCard}>
-          <View style={styles.cashflowCount}>
-            <Text style={[styles.textMedium, styles.textGreen]}>150,000</Text>
-            <TabBarIcon name={'arrow-up-circle'} style={[styles.textMedium, styles.textGreen]} />
+        {exampleData.map((data) => (
+          <View style={styles.borderCard} key={data.id}>
+            <View style={styles.cashflowCount}>
+              <Text style={[styles.textMedium, data.type === 'income' ? styles.textGreen : styles.textRed]}>
+                {cashFomat(data.amount)}  {/* <-- amount value */}
+              </Text>
+              <TabBarIcon
+                name={data.type === 'income' ? 'arrow-up-circle' : 'arrow-down-circle'}
+                style={[styles.textMedium, data.type === 'income' ? styles.textGreen : styles.textRed]}
+              />
+            </View>
+            <Text style={[styles.textSmall, styles.textGray]}>
+              {data.created_at}
+            </Text>
           </View>
-          <Text style={[styles.textSmall, styles.textGray]}>14:03, 23/07/2024</Text>
-        </View>
-
-        <View style={styles.borderCard}>
-          <View style={styles.cashflowCount}>
-            <Text style={[styles.textMedium, styles.textRed]}>70,000</Text>
-            <TabBarIcon name={'arrow-down-circle'} style={[styles.textMedium, styles.textRed]} />
-          </View>
-          <Text style={[styles.textSmall, styles.textGray]}>10:41, 22/07/2024</Text>
-        </View>
+        ))}
 
       </View>
       {/* ===== CASH FLOW END ===== */}
-
-
       
      
     </ScrollView>
