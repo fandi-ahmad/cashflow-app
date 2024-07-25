@@ -6,12 +6,6 @@ export default function HomeScreen() {
     <ScrollView>
       <View style={styles.heroSection}>
 
-        <View style={styles.navbarTop}>
-          <TabBarIcon name={'menu'} style={styles.textWhite} />
-          <TabBarIcon name={'people-circle'} style={styles.textWhite}  />
-
-        </View>
-
         <Text style={styles.textWhite}>Your current money</Text>
         <Text style={[styles.textWhite, styles.textLarge]}>
           <TabBarIcon name={'wallet'} style={styles.iconWallet} />
@@ -126,12 +120,7 @@ const styles = StyleSheet.create({
   heroSection: {
     backgroundColor: '#2f3dc2',
     padding: 20,
-  },
-  navbarTop: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    flexDirection: 'row',
-    marginBottom: 18
+    paddingTop: 28
   },
   textWhite: {
     color: '#ffffff'
