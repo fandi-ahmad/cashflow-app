@@ -1,7 +1,7 @@
 import { StyleSheet, View, Text, ScrollView, Pressable, TextInput } from 'react-native';
 import { TabBarIcon } from '@/components/navigation/TabBarIcon';
 import Modal from 'react-native-modal'
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function CashFlowScreen() {
@@ -9,20 +9,7 @@ export default function CashFlowScreen() {
   const [cashActionText, setCashActionText] = useState('')
   const [amountCash, setAmountCash] = useState('')
   const [typeCash, setTypeCash] = useState('')
-  const [exampleData, setExampleData] = useState([
-    {
-      id: 1,
-      amount: 50000,
-      type: 'income',
-      created_at: '16:01, 23/07/2024'
-    },
-    {
-      id: 2,
-      amount: 85000,
-      type: 'spending',
-      created_at: '10:41, 22/07/2024'
-    }
-  ])
+  const [allDataCash, setAllDataCash] = useState<any>([])
 
   const showModalandSetType = (actionType = '', typeCash: string) => {
     setCashActionText(actionType)
@@ -43,7 +30,7 @@ export default function CashFlowScreen() {
     return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   }
 
-  function generateUniqueId() {
+  const generateUniqueId = () => {
     const now = new Date();
     
     const year = now.getFullYear().toString();
@@ -76,17 +63,58 @@ export default function CashFlowScreen() {
     const id = generateUniqueId()
     const currentTime = getCurrentDateTime()
 
-    console.log({
+    const data = {
       id: id,
       amount: Number(amountCash),
       type: typeCash,
       created_at: currentTime
-    })
+    }
 
-
-
-    // toggleModal()
+    addNewDataCash(data)
+    closeModal()
   }
+
+  const addNewDataCash = async (newData: any) => {
+    const value = await AsyncStorage.getItem('cash');
+    let cashData = [];
+
+
+    if (value === null || value === '') {
+      console.log('tambah data pertama kali');
+      const jsonValue = JSON.stringify(newData)
+      await AsyncStorage.setItem('cash', jsonValue)
+    } else {
+      console.log('lakukan update');
+      cashData = JSON.parse(value);
+    }
+
+    // cashData.push(newData);
+    cashData.unshift(newData)
+
+    // save array data in AsyncStorage
+    const jsonValue = JSON.stringify(cashData);
+    await AsyncStorage.setItem('cash', jsonValue);
+
+    getAllDataCash()
+  
+  };
+
+  const deleteAllDataCash = async () => {
+    await AsyncStorage.setItem('cash', '');
+  }
+
+  const getAllDataCash = async () => {
+    const value = await AsyncStorage.getItem('cash');
+
+    if (value) {
+      const jsonValue = JSON.parse(value);
+      setAllDataCash(jsonValue)
+    }
+  }
+
+  useEffect(() => {
+    getAllDataCash()
+  }, [])
 
   return (
     <ScrollView>
@@ -113,9 +141,25 @@ export default function CashFlowScreen() {
           >
             <Text style={[styles.textWhite, {textAlign: 'center'}]}>{cashActionText}</Text>
           </Pressable>
+
+          <View>
+            <Pressable onPress={deleteAllDataCash} style={{marginTop: 50}}>
+              <Text>delete</Text>
+            </Pressable>
+          </View>
           
         </View>
       </Modal>
+
+      <View style={styles.heroSection}>
+
+        <Text style={styles.textWhite}>Your current money</Text>
+        <Text style={[styles.textWhite, styles.textLarge]}>
+          <TabBarIcon name={'wallet'} style={styles.iconWallet} />
+          80,200
+        </Text>
+
+      </View>
       
       <View style={styles.container}>
         <View style={styles.cashButtonContainer}>
@@ -136,7 +180,8 @@ export default function CashFlowScreen() {
       <View style={styles.container}>
         <Text style={styles.textMenu}>Cash Flow</Text>
 
-        {exampleData.map((data) => (
+        { allDataCash ? 
+        allDataCash.map((data: any) => (
           <View style={styles.borderCard} key={data.id}>
             <View style={styles.cashflowCount}>
               <Text style={[styles.textMedium, data.type === 'income' ? styles.textGreen : styles.textRed]}>
@@ -151,7 +196,7 @@ export default function CashFlowScreen() {
               {data.created_at}
             </Text>
           </View>
-        ))}
+        )) : null}
 
       </View>
       {/* ===== CASH FLOW END ===== */}
@@ -162,6 +207,15 @@ export default function CashFlowScreen() {
 }
 
 const styles = StyleSheet.create({
+  heroSection: {
+    backgroundColor: '#2f3dc2',
+    padding: 20,
+    paddingTop: 28
+  },
+  iconWallet: {
+    fontSize: 20,
+    marginRight: 8
+  },
   textWhite: {
     color: '#ffffff'
   },
