@@ -1,18 +1,11 @@
 import { StyleSheet, View, Text, ScrollView, Image } from 'react-native';
 import { TabBarIcon } from '@/components/navigation/TabBarIcon';
+import { HeroSection } from '@/components/HeroSection';
 
 export default function HomeScreen() {
   return (
     <ScrollView>
-      <View style={styles.heroSection}>
-
-        <Text style={styles.textWhite}>Your current money</Text>
-        <Text style={[styles.textWhite, styles.textLarge]}>
-          <TabBarIcon name={'wallet'} style={styles.iconWallet} />
-          80,200
-        </Text>
-
-      </View>
+      <HeroSection/>
 
       {/* ===== SERVICE START ===== */}
       <View style={styles.container}>
@@ -108,20 +101,6 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  heroSection: {
-    backgroundColor: '#2f3dc2',
-    padding: 20,
-    paddingTop: 28
-  },
   textWhite: {
     color: '#ffffff'
   },
@@ -134,10 +113,6 @@ const styles = StyleSheet.create({
   },
   textBlue: {
     color: '#3b4bf7'
-  },
-  iconWallet: {
-    fontSize: 20,
-    marginRight: 8
   },
   container: {
     paddingTop: 18,

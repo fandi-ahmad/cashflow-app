@@ -3,6 +3,8 @@ import { TabBarIcon } from '@/components/navigation/TabBarIcon';
 import Modal from 'react-native-modal'
 import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { HeroSection } from '@/components/HeroSection';
+import { useGlobalState } from '@/hooks/useGlobalState';
 
 export default function CashFlowScreen() {
   const [isModalVisible, setModalVisible] = useState(false);
@@ -10,6 +12,7 @@ export default function CashFlowScreen() {
   const [amountCash, setAmountCash] = useState('')
   const [typeCash, setTypeCash] = useState('')
   const [allDataCash, setAllDataCash] = useState<any>([])
+  const [totalCash, setTotalCash] = useGlobalState('totalCash')
 
   const showModalandSetType = (actionType = '', typeCash: string) => {
     setCashActionText(actionType)
@@ -109,8 +112,21 @@ export default function CashFlowScreen() {
     if (value) {
       const jsonValue = JSON.parse(value);
       setAllDataCash(jsonValue)
+
+      // save total cash in global state
+      const total = jsonValue.reduce((acc: number, item: any) => {
+        if (item.type === "spending") {
+          return acc - item.amount;
+        } else if (item.type === "income") {
+          return acc + item.amount;
+        }
+        return acc;
+      }, 0);
+
+      setTotalCash(total)
     }
   }
+
 
   useEffect(() => {
     getAllDataCash()
@@ -151,15 +167,7 @@ export default function CashFlowScreen() {
         </View>
       </Modal>
 
-      <View style={styles.heroSection}>
-
-        <Text style={styles.textWhite}>Your current money</Text>
-        <Text style={[styles.textWhite, styles.textLarge]}>
-          <TabBarIcon name={'wallet'} style={styles.iconWallet} />
-          80,200
-        </Text>
-
-      </View>
+      <HeroSection/>
       
       <View style={styles.container}>
         <View style={styles.cashButtonContainer}>
@@ -207,15 +215,6 @@ export default function CashFlowScreen() {
 }
 
 const styles = StyleSheet.create({
-  heroSection: {
-    backgroundColor: '#2f3dc2',
-    padding: 20,
-    paddingTop: 28
-  },
-  iconWallet: {
-    fontSize: 20,
-    marginRight: 8
-  },
   textWhite: {
     color: '#ffffff'
   },
