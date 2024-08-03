@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "react-native-learn",
-    "slug": "react-native-learn",
+    "name": "cash flow notes",
+    "slug": "cash flow notes",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -19,7 +19,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.fandijsx.cashflownotes"
     },
     "web": {
       "bundler": "metro",
@@ -31,6 +32,14 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "02526058-0fad-41a2-b4d5-a9dd6f91eb6c"
+      }
     }
   }
 }
