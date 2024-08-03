@@ -26,21 +26,11 @@ export default function TabLayout() {
       />
 
       <Tabs.Screen
-        name="cashFlow"
-        options={{
-          title: 'Cash FLow',
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={'wallet'} color={color} />
-          ),
-        }}
-      />
-
-      <Tabs.Screen
         name="about"
         options={{
           title: 'About',
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={'analytics'} color={color} />
+            <TabBarIcon name={'information-circle'} color={color} />
           ),
         }}
       />

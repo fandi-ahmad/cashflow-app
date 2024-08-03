@@ -1,101 +1,175 @@
-import { StyleSheet, View, Text, ScrollView, Image } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, Pressable, TextInput } from 'react-native';
 import { TabBarIcon } from '@/components/navigation/TabBarIcon';
+import Modal from 'react-native-modal'
+import { useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { HeroSection } from '@/components/HeroSection';
+import { useGlobalState } from '@/hooks/useGlobalState';
+import { cashFormated, generateUniqueId, getCurrentDateTime } from '@/function';
 
 export default function HomeScreen() {
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [cashActionText, setCashActionText] = useState('')
+  const [amountCash, setAmountCash] = useState('')
+  const [typeCash, setTypeCash] = useState('')
+  const [allDataCash, setAllDataCash] = useState<any>([])
+  const [totalCash, setTotalCash] = useGlobalState('totalCash')
+
+  const showModalandSetType = (actionType = '', typeCash: string) => {
+    setCashActionText(actionType)
+    setTypeCash(typeCash)
+    toggleModal()
+  }
+
+  const closeModal = () => {
+    setAmountCash('')
+    toggleModal()
+  }
+
+  const toggleModal = () => {
+    setModalVisible(!isModalVisible);
+  };
+
+  const actionForCashFlow = () => {
+    const id = generateUniqueId()
+    const currentTime = getCurrentDateTime()
+
+    const data = {
+      id: id,
+      amount: Number(amountCash),
+      type: typeCash,
+      created_at: currentTime
+    }
+
+    addNewDataCash(data)
+    closeModal()
+  }
+
+  const addNewDataCash = async (newData: any) => {
+    const value = await AsyncStorage.getItem('cash');
+    let cashData = [];
+
+    if (value === null || value === '') {
+      // add data for first time
+      const jsonValue = JSON.stringify(newData)
+      await AsyncStorage.setItem('cash', jsonValue)
+    } else {
+      // update data
+      cashData = JSON.parse(value);
+    }
+
+    // cashData.push(newData);
+    cashData.unshift(newData)
+
+    // save array data in AsyncStorage
+    const jsonValue = JSON.stringify(cashData);
+    await AsyncStorage.setItem('cash', jsonValue);
+
+    getAllDataCash()
+  };
+
+  const getAllDataCash = async () => {
+    const value = await AsyncStorage.getItem('cash');
+
+    if (value) {
+      const jsonValue = JSON.parse(value);
+      setAllDataCash(jsonValue)
+
+      // save total cash in global state
+      const total = jsonValue.reduce((acc: number, item: any) => {
+        if (item.type === "spending") {
+          return acc - item.amount;
+        } else if (item.type === "income") {
+          return acc + item.amount;
+        }
+        return acc;
+      }, 0);
+
+      setTotalCash(total)
+    }
+  }
+  
+  useEffect(() => {
+    getAllDataCash()
+  }, [])
+
   return (
     <ScrollView>
+
+      {/* ===== MODAL START ===== */}
+      <Modal isVisible={isModalVisible}>
+        <View style={styles.modalContainer}>
+          <View style={{display: 'flex', justifyContent: 'flex-end', flexDirection: 'row', marginBottom: 20}}>
+            <Pressable onPress={closeModal}>
+              <TabBarIcon name={'close-circle'} />
+            </Pressable>
+          </View>
+
+          <TextInput
+            placeholder='0' keyboardType='numeric' style={styles.inputField}
+            value={amountCash}
+            onChangeText={newAmount => setAmountCash(newAmount.replace(/[^0-9]/g, ''))}
+          />
+
+          <View style={{marginBottom: 20}}></View>
+
+          <Pressable
+            style={[styles.cashButton, cashActionText === 'Add Income' ? styles.bgGreen : styles.bgRed]}
+            onPress={actionForCashFlow}
+          >
+            <Text style={[styles.textWhite, {textAlign: 'center'}]}>{cashActionText}</Text>
+          </Pressable>
+
+        </View>
+      </Modal>
+      {/* ===== MODAL END ===== */}
+
       <HeroSection/>
-
-      {/* ===== SERVICE START ===== */}
+      
       <View style={styles.container}>
+        <View style={styles.cashButtonContainer}>
 
-        <Text style={styles.textMenu}>Service</Text>
+          <Pressable style={[styles.cashButton, styles.bgGreen]} onPress={() => showModalandSetType('Add Income', 'income')}>
+            <Text style={styles.textWhite}>Add Income</Text>
+          </Pressable>
 
-        <View style={[styles.menuServiceContainer, styles.addBottom]}>
-
-          <View style={styles.iconMenuContainer}>
-            <TabBarIcon name={'albums'} style={styles.iconMenu} />
-            <Text style={styles.iconText}>Album</Text>
-          </View>
-
-          <View style={styles.iconMenuContainer}>
-            <TabBarIcon name={'albums'} style={styles.iconMenu} />
-            <Text style={styles.iconText}>Album</Text>
-          </View>
-
-          <View style={styles.iconMenuContainer}>
-            <TabBarIcon name={'albums'} style={styles.iconMenu} />
-            <Text style={styles.iconText}>Album</Text>
-          </View>
-
-          <View style={styles.iconMenuContainer}>
-            <TabBarIcon name={'albums'} style={styles.iconMenu} />
-            <Text style={styles.iconText}>Album</Text>
-          </View>
+          <Pressable style={[styles.cashButton, styles.bgRed]} onPress={() => showModalandSetType('Add Spending', 'spending')}>
+            <Text style={styles.textWhite}>Add Spending</Text>
+          </Pressable>
 
         </View>
+      </View>
 
-        <View style={styles.menuServiceContainer}>
+      <View>
+        
+      </View>
 
-          <View style={styles.iconMenuContainer}>
-            <TabBarIcon name={'albums'} style={styles.iconMenu} />
-            <Text style={styles.iconText}>Album</Text>
+
+      {/* ===== CASH FLOW START ===== */}
+      <View style={styles.container}>
+        <Text style={styles.textMenu}>Cash Flow</Text>
+
+        { allDataCash ? 
+        allDataCash.map((data: any) => (
+          <View style={styles.borderCard} key={data.id}>
+            <View style={styles.cashflowCount}>
+              <Text style={[styles.textMedium, data.type === 'income' ? styles.textGreen : styles.textRed]}>
+                {cashFormated(data.amount)}  {/* <-- amount value */}
+              </Text>
+              <TabBarIcon
+                name={data.type === 'income' ? 'arrow-up-circle' : 'arrow-down-circle'}
+                style={[styles.textMedium, data.type === 'income' ? styles.textGreen : styles.textRed]}
+              />
+            </View>
+            <Text style={[styles.textSmall, styles.textGray]}>
+              {data.created_at}
+            </Text>
           </View>
-
-          <View style={styles.iconMenuContainer}>
-            <TabBarIcon name={'albums'} style={styles.iconMenu} />
-            <Text style={styles.iconText}>Album</Text>
-          </View>
-
-          <View style={styles.iconMenuContainer}>
-            <TabBarIcon name={'albums'} style={styles.iconMenu} />
-            <Text style={styles.iconText}>Album</Text>
-          </View>
-
-          <View style={styles.iconMenuContainer}>
-            <TabBarIcon name={'albums'} style={styles.iconMenu} />
-            <Text style={styles.iconText}>Album</Text>
-          </View>
-
-        </View>
+        )) : null}
 
       </View>
-      {/* ===== SERVICE END ===== */}
+      {/* ===== CASH FLOW END ===== */}
       
-
-      {/* ===== NEWS START ===== */}
-      <View style={styles.container}>
-        <Text style={styles.textMenu}>News</Text>
-
-        <View style={styles.newsCard}>
-          <Text style={styles.textSmall}>
-            Lorem, ipsum dolor sit amet consectetur adipisicing elit. Unde, veritatis! Nostrum, soluta fugit quia harum voluptate cum repellendus ut esse...
-            <Text style={styles.textBlue}>  see more</Text>
-          </Text>
-          <Image
-            source={require('@/assets/images/news-img-1.jpg')}
-            style={styles.newsImage}
-          />
-        </View>
-
-        <View style={styles.newsCard}>
-          <Text style={styles.textSmall}>
-            Lorem, ipsum dolor sit amet consectetur adipisicing elit. Unde, veritatis! Nostrum, soluta fugit quia harum voluptate cum repellendus ut esse...
-            <Text style={styles.textBlue}>  see more</Text>
-          </Text>
-          <Image
-            source={require('@/assets/images/news-img-1.jpg')}
-            style={styles.newsImage}
-          />
-        </View>
-
-      </View>
-      {/* ===== NEWS END ===== */}
-
-
-      
-     
     </ScrollView>
   );
 }
@@ -108,11 +182,24 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 700
   },
+  textMedium: {
+    fontSize: 16,
+    fontWeight: 500
+  },
   textSmall: {
     fontSize: 12
   },
   textBlue: {
     color: '#3b4bf7'
+  },
+  textGreen: {
+    color: '#1bb55b'
+  },
+  textRed: {
+    color: '#e01b42'
+  },
+  textGray: {
+    color: '#545454'
   },
   container: {
     paddingTop: 18,
@@ -126,12 +213,6 @@ const styles = StyleSheet.create({
     fontWeight: 600,
     marginBottom: 12
   },
-  menuServiceContainer: {
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12
-  },
   addBottom: {
     marginBottom: 18,
   },
@@ -142,17 +223,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     paddingTop: 2
   },
-  iconMenuContainer: {
-    borderWidth: 0.5,
-    borderColor: '#b5b5b5',
-    width: 64,
-    height: 64,
-    borderRadius: 4,
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  newsCard: {
+  borderCard: {
     borderWidth: 0.5,
     borderColor: '#b5b5b5',
     borderRadius: 4,
@@ -160,12 +231,45 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     display: 'flex',
     flexDirection: 'row',
-    gap: 10
+    justifyContent: 'space-between'
   },
-  newsImage: {
-    height: 80,
-    width: 160,
-    borderRadius: 2,
-    objectFit: 'cover'
+  cashButtonContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    gap: 18
+  },
+  cashButton: {
+    paddingTop: 8,
+    paddingBottom: 8,
+    paddingLeft: 12,
+    paddingRight: 12,
+    borderRadius: 4,
+  },
+  bgBlue: {
+    backgroundColor: '#2f3dc2',
+  },
+  bgGreen: {
+    backgroundColor: '#1bb55b'
+  },
+  bgRed: {
+    backgroundColor: '#e01b42'
+  },
+  cashflowCount: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4
+  },
+  modalContainer: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 4
+  },
+  inputField: {
+    borderWidth: 1,
+    borderColor: '#b5b5b5',
+    borderRadius: 4,
+    padding: 8,
   }
 });
