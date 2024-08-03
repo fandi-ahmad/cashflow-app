@@ -2,17 +2,14 @@ import { useEffect } from 'react';
 import { View, StyleSheet, Text } from 'react-native';
 import { TabBarIcon } from './navigation/TabBarIcon';
 import { useGlobalState } from '@/hooks/useGlobalState';
+import { cashFormated } from '@/function';
 
 export function HeroSection() {
   const [totalCash, setTotalCash] = useGlobalState('totalCash')
   const [totalCashFormated, setTotalCashFormated] = useGlobalState('totalCashFormated')
 
-  const cashFomat = (value: number) => {
-    return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-  }
-
   const getTotalCash = () => {
-    const formated = cashFomat(totalCash)
+    const formated = cashFormated(totalCash)
     setTotalCashFormated(formated)
   }
 
@@ -25,7 +22,7 @@ export function HeroSection() {
       <Text style={styles.textWhite}>Your current money</Text>
       <Text style={[styles.textWhite, styles.textLarge]}>
         <TabBarIcon name={'wallet'} style={styles.iconWallet} />
-        {totalCashFormated}
+        {totalCash ? totalCashFormated : '0'}
       </Text>
     </View>
   )
@@ -35,7 +32,7 @@ const styles = StyleSheet.create({
   heroSection: {
     backgroundColor: '#2f3dc2',
     padding: 20,
-    paddingTop: 28
+    paddingTop: 48
   },
   textWhite: {
     color: '#ffffff'
@@ -46,6 +43,6 @@ const styles = StyleSheet.create({
   },
   iconWallet: {
     fontSize: 20,
-    marginRight: 8
+    paddingRight: 8
   },
 })
