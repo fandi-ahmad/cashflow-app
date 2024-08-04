@@ -1,64 +1,149 @@
-import { Image, StyleSheet, Platform, Text, View } from 'react-native';
+import { TabBarIcon } from '@/components/navigation/TabBarIcon';
+import { StyleSheet, Text, View, ScrollView, Pressable } from 'react-native';
+import Modal from 'react-native-modal'
+import { useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useGlobalState } from '@/hooks/useGlobalState';
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+const DeleteMessage = ({closeButton, deleteButton}: any) => {
+  return (
+    <View id='deleteMessage'>
+      <View style={{display: 'flex', justifyContent: 'flex-end', flexDirection: 'row', marginBottom: 28}}>
+        <Pressable onPress={closeButton}>
+          <TabBarIcon name={'close-circle'} />
+        </Pressable>
+      </View>
+
+      <Text style={{ textAlign: 'center', fontSize: 18 }}>
+        Are you sure you want to delete all charge data?
+      </Text>
+
+      <Pressable onPress={deleteButton} style={[styles.baseButton, styles.bgRed]}>
+        <Text style={{color: 'white'}}>Yes, delete it</Text>
+      </Pressable>
+    </View>
+  )
+}
+
+const WaitingMessage = () => {
+  return (
+    <Text id='waitingMessage' style={{ textAlign: 'center' }}>
+      Please Waiting ...
+    </Text>
+  )
+}
+
+const SuccessMessage = ({backButton}: any) => {
+  return (
+    <View id='successMessage' style={{ display: 'flex', justifyContent: 'center' }}>
+      <TabBarIcon name='checkmark-circle' style={{ fontSize: 52, color: '#1bb55b', margin: 'auto' }} />
+      <Text style={{ textAlign: 'center', fontSize: 18 }}>
+        Delete data successfully
+      </Text>
+      <Pressable onPress={backButton} style={[styles.baseButton, styles.bgGray]}>
+        <Text style={{color: 'white'}}>Back</Text>
+      </Pressable>
+    </View>
+  )
+}
+
 
 export default function AboutScreen() {
+  const [isModalVisible, setModalVisible] = useState<boolean>(false);
+  const [modalType, setModalType] = useState<'delete' | 'waiting' | 'success'>('delete')
+  const [allDataCash, setAllDataCash] = useGlobalState('allDataCash')
+  const [totalCash, setTotalCash] = useGlobalState('totalCash')
+
+  const toggleModal = () => {
+    setModalVisible(!isModalVisible);
+  };
+
+  const handleModalMessage = () => {
+    if (modalType === 'delete') {
+      return <DeleteMessage closeButton={toggleModal} deleteButton={deleteAllData} />
+    } else if (modalType === 'waiting') {
+      return <WaitingMessage/>
+    } else {
+      return <SuccessMessage backButton={toggleModal} />
+    }
+  }
+
+  const openModalDelete = () => {
+    toggleModal()
+    setModalType('delete')
+  }
+
+  const deleteAllData = async () => {
+    setModalType('waiting')
+
+    await AsyncStorage.setItem('cash', '')
+    setTotalCash(NaN)
+    setAllDataCash([])
+
+    setModalType('success')
+  }
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#d4d488' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
+    <ScrollView>
 
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Bagian About</ThemedText>
-        <HelloWave />
-      </ThemedView>
+      <Modal isVisible={isModalVisible}>
+        <View style={styles.modalContainer}>
+          {handleModalMessage()}
+        </View>
+      </Modal>
 
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText style={styles.textContainer}>
-          <View>
-            <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText>
-          </View>
-          <View>
-            <Text >just red</Text>
-            <Text >just blue</Text>
-          </View>
-        </ThemedText>
-      </ThemedView>
+      <View style={styles.container}>
+
+        <Text style={{ fontWeight: 600, fontSize: 20, paddingBottom: 12, paddingLeft: 12 }}>Option</Text>
+
+        <View>
+          <Pressable onPress={openModalDelete} style={styles.listMenu}>
+            <TabBarIcon name={'trash'} style={styles.listIcon} />
+            <Text>Delete All Data Cash</Text>
+          </Pressable>
+        </View>  
       
-      
-    </ParallaxScrollView>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  container: {
+    paddingTop: 48,
+    paddingBottom: 8,
+  },
+  listMenu: {
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#b5b5b5',
+    borderRadius: 4,
+    padding: 12,
+    display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 4,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  listIcon: {
+    fontSize: 22
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  modalContainer: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 4
   },
-  textContainer: {
-    backgroundColor: 'tomato',
-    display: 'flex',
-    flexDirection: 'column'
+  baseButton: {
+    paddingTop: 8,
+    paddingBottom: 8,
+    paddingLeft: 12,
+    paddingRight: 12,
+    borderRadius: 4,
+    margin: 'auto',
+    marginTop: 28
+  },
+  bgRed: {
+    backgroundColor: '#e01b42'
+  },
+  bgGray: {
+    backgroundColor: '#575757'
   },
 });
