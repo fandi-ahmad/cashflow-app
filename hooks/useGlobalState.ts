@@ -2,12 +2,14 @@ import { createGlobalState } from "react-hooks-global-state";
 
 type stateType = {
   totalCash: number,
-  totalCashFormated: string
+  totalCashFormated: string,
+  allDataCash: any,
 }
 
 const initialState = <stateType> {
   totalCash: NaN,
-  totalCashFormated: ''
+  totalCashFormated: '',
+  allDataCash: [],
 };
 const { useGlobalState } = createGlobalState(initialState);
 
