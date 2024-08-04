@@ -5,15 +5,18 @@ import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { HeroSection } from '@/components/HeroSection';
 import { useGlobalState } from '@/hooks/useGlobalState';
-import { cashFormated, generateUniqueId, getCurrentDateTime } from '@/function';
+import { generateUniqueId, getCurrentDateTime } from '@/function';
+import CardList from '@/components/home/CardList';
 
 export default function HomeScreen() {
   const [isModalVisible, setModalVisible] = useState(false);
   const [cashActionText, setCashActionText] = useState('')
+  const [allDataCash, setAllDataCash] = useGlobalState('allDataCash')
+  const [totalCash, setTotalCash] = useGlobalState('totalCash')
+
   const [amountCash, setAmountCash] = useState('')
   const [typeCash, setTypeCash] = useState('')
-  const [allDataCash, setAllDataCash] = useState<any>([])
-  const [totalCash, setTotalCash] = useGlobalState('totalCash')
+  const [note, setNote] = useState<string>('')
 
   const showModalandSetType = (actionType = '', typeCash: string) => {
     setCashActionText(actionType)
@@ -23,6 +26,7 @@ export default function HomeScreen() {
 
   const closeModal = () => {
     setAmountCash('')
+    setNote('')
     toggleModal()
   }
 
@@ -38,7 +42,8 @@ export default function HomeScreen() {
       id: id,
       amount: Number(amountCash),
       type: typeCash,
-      created_at: currentTime
+      created_at: currentTime,
+      note: note,
     }
 
     addNewDataCash(data)
@@ -105,13 +110,21 @@ export default function HomeScreen() {
             </Pressable>
           </View>
 
+          <Text style={{paddingBottom: 8}}>*note</Text>
+          <TextInput
+            placeholder='typing here' style={styles.inputField}
+            placeholderTextColor='#888888'
+            value={note}
+            onChangeText={newText => setNote(newText)}
+          />
+
+          <Text style={{paddingBottom: 8}}>*amount</Text>
           <TextInput
             placeholder='0' keyboardType='numeric' style={styles.inputField}
+            placeholderTextColor='#888888'
             value={amountCash}
             onChangeText={newAmount => setAmountCash(newAmount.replace(/[^0-9]/g, ''))}
           />
-
-          <View style={{marginBottom: 20}}></View>
 
           <Pressable
             style={[styles.cashButton, cashActionText === 'Add Income' ? styles.bgGreen : styles.bgRed]}
@@ -140,31 +153,19 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      <View>
-        
-      </View>
-
 
       {/* ===== CASH FLOW START ===== */}
       <View style={styles.container}>
         <Text style={styles.textMenu}>Cash Flow</Text>
 
-        { allDataCash ? 
-        allDataCash.map((data: any) => (
-          <View style={styles.borderCard} key={data.id}>
-            <View style={styles.cashflowCount}>
-              <Text style={[styles.textMedium, data.type === 'income' ? styles.textGreen : styles.textRed]}>
-                {cashFormated(data.amount)}  {/* <-- amount value */}
-              </Text>
-              <TabBarIcon
-                name={data.type === 'income' ? 'arrow-up-circle' : 'arrow-down-circle'}
-                style={[styles.textMedium, data.type === 'income' ? styles.textGreen : styles.textRed]}
-              />
-            </View>
-            <Text style={[styles.textSmall, styles.textGray]}>
-              {data.created_at}
-            </Text>
-          </View>
+        { allDataCash ? allDataCash.map((data: any) => (
+          <CardList
+            key={data.id}
+            type={data.type}
+            amount={data.amount}
+            created_at={data.created_at}
+            note={data.note || '-'}
+          />
         )) : null}
 
       </View>
@@ -223,16 +224,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     paddingTop: 2
   },
-  borderCard: {
-    borderWidth: 0.5,
-    borderColor: '#b5b5b5',
-    borderRadius: 4,
-    padding: 8,
-    marginBottom: 12,
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'space-between'
-  },
   cashButtonContainer: {
     display: 'flex',
     flexDirection: 'row',
@@ -255,12 +246,6 @@ const styles = StyleSheet.create({
   bgRed: {
     backgroundColor: '#e01b42'
   },
-  cashflowCount: {
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4
-  },
   modalContainer: {
     backgroundColor: 'white',
     padding: 20,
@@ -271,5 +256,6 @@ const styles = StyleSheet.create({
     borderColor: '#b5b5b5',
     borderRadius: 4,
     padding: 8,
+    marginBottom: 20
   }
 });
