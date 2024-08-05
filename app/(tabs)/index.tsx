@@ -7,6 +7,8 @@ import { HeroSection } from '@/components/HeroSection';
 import { useGlobalState } from '@/hooks/useGlobalState';
 import { generateUniqueId, getCurrentDateTime } from '@/function';
 import CardList from '@/components/home/CardList';
+import BaseInput from '@/components/input/BaseInput';
+import BaseInputWithIcon from '@/components/input/BaseInputWithIcon';
 
 export default function HomeScreen() {
   const [isModalVisible, setModalVisible] = useState(false);
@@ -14,9 +16,12 @@ export default function HomeScreen() {
   const [allDataCash, setAllDataCash] = useGlobalState('allDataCash')
   const [totalCash, setTotalCash] = useGlobalState('totalCash')
 
-  const [amountCash, setAmountCash] = useState('')
   const [typeCash, setTypeCash] = useState('')
   const [note, setNote] = useState<string>('')
+  const [amountCash, setAmountCash] = useState('')
+
+  const [isValidNote, setIsValidNote] = useState<boolean>(true)
+  const [isValidAmountCash, setIsValidAmountCash] = useState<boolean>(true)
 
   const showModalandSetType = (actionType = '', typeCash: string) => {
     setCashActionText(actionType)
@@ -27,6 +32,8 @@ export default function HomeScreen() {
   const closeModal = () => {
     setAmountCash('')
     setNote('')
+    setIsValidNote(true)
+    setIsValidAmountCash(true)
     toggleModal()
   }
 
@@ -38,16 +45,24 @@ export default function HomeScreen() {
     const id = generateUniqueId()
     const currentTime = getCurrentDateTime()
 
-    const data = {
-      id: id,
-      amount: Number(amountCash),
-      type: typeCash,
-      created_at: currentTime,
-      note: note,
-    }
+    !note ? setIsValidNote(false) : setIsValidNote(true)
+    !amountCash ? setIsValidAmountCash(false) : setIsValidAmountCash(true)
 
-    addNewDataCash(data)
-    closeModal()
+    if (note && amountCash) {
+      // remove "," in amount cash from input
+      const unformattedAmount = amountCash.replace(/,/g, '');
+
+      const data = {
+        id: id,
+        amount: Number(unformattedAmount),
+        type: typeCash,
+        created_at: currentTime,
+        note: note,
+      }
+
+      addNewDataCash(data)
+      closeModal()
+    }
   }
 
   const addNewDataCash = async (newData: any) => {
@@ -110,20 +125,25 @@ export default function HomeScreen() {
             </Pressable>
           </View>
 
-          <Text style={{paddingBottom: 8}}>*note</Text>
-          <TextInput
-            placeholder='typing here' style={styles.inputField}
-            placeholderTextColor='#888888'
+          <BaseInput
+            label='note'
+            placeholder='typing here'
             value={note}
             onChangeText={newText => setNote(newText)}
+            styleAdd={!isValidNote && styles.invalidInput}
           />
 
-          <Text style={{paddingBottom: 8}}>*amount</Text>
-          <TextInput
-            placeholder='0' keyboardType='numeric' style={styles.inputField}
-            placeholderTextColor='#888888'
+          <BaseInputWithIcon
+            icon='Rp' label='cash' placeholder='0'
+            keyboardType='numeric'
             value={amountCash}
-            onChangeText={newAmount => setAmountCash(newAmount.replace(/[^0-9]/g, ''))}
+            onChangeText={newAmount => {
+              let formattedAmount = newAmount.replace(/[^0-9]/g, '');
+              if (formattedAmount === '0') formattedAmount = '';
+              setAmountCash(formattedAmount.replace(/\B(?=(\d{3})+(?!\d))/g, ','));
+            }}
+            styleAdd={!isValidAmountCash && styles.invalidInput}
+
           />
 
           <Pressable
@@ -251,11 +271,7 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 4
   },
-  inputField: {
-    borderWidth: 1,
-    borderColor: '#b5b5b5',
-    borderRadius: 4,
-    padding: 8,
-    marginBottom: 20
-  }
+  invalidInput: {
+    borderColor: 'red'
+  },
 });
