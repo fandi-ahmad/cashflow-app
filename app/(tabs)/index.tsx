@@ -6,7 +6,6 @@ import { useGlobalState } from '@/hooks/useGlobalState';
 import CardList from '@/components/home/CardList';
 import CheckBox from '@/components/CheckBox';
 import ModalForm from '@/components/home/ModalForm';
-
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { cashFormated } from '@/function';
 
@@ -37,36 +36,29 @@ export default function HomeScreen() {
     if (filterType === 'income') {
       setIsFilterIncome(!isFilterIncome)
       isFilterSpending ? setIsFilterSpending(false) : null
-      isFilterIncome ? setTotalCashFilter(0) : getAllDataCashForFilter('income')
+      isFilterIncome ? getAllDataCashForFilter('') : getAllDataCashForFilter('income')
     }
 
     if (filterType === 'spending') {
       setIsFilterSpending(!isFilterSpending)
       isFilterIncome ? setIsFilterIncome(false) : null
-      isFilterSpending ? setTotalCashFilter(0) : getAllDataCashForFilter('spending')
+      isFilterSpending ? getAllDataCashForFilter('') : getAllDataCashForFilter('spending')
     }
 
   }
   
   
-  const getAllDataCashForFilter = async (filterType: 'income' | 'spending') => {
+  const getAllDataCashForFilter = async (filterType: 'income' | 'spending' | '') => {
     const value = await AsyncStorage.getItem('cash');
 
     if (value) {
       const jsonValue = JSON.parse(value);
 
-      const total = jsonValue.reduce((acc: number, item: any) => {
-        if (filterType === 'income' && item.type === "income") {
-          return acc + item.amount;
-        }
+      const filteredData = filterType ? jsonValue.filter((item: any) => item.type === filterType) : jsonValue;
+      setAllDataCash(filteredData);
 
-        if (filterType === 'spending' && item.type === 'spending') {
-          return acc + item.amount;
-        }
-        return acc;
-      }, 0);
-
-      setTotalCashFilter(total)
+      const total = filterType ? filteredData.reduce((acc: number, item: any) => acc + item.amount, 0) : 0;
+      setTotalCashFilter(total);
     }
   }
 
