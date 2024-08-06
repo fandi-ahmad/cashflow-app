@@ -19,7 +19,7 @@ export function HeroSection() {
 
   return (
     <View style={styles.heroSection}>
-      <Text style={styles.textWhite}>Your current money</Text>
+      <Text style={styles.textWhite}>Uangmu sekarang</Text>
       <Text style={[styles.textWhite, styles.textLarge]}>
         <TabBarIcon name={'wallet'} style={styles.iconWallet} />
         {totalCash ? totalCashFormated : '0'}
