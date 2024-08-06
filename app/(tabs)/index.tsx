@@ -1,161 +1,81 @@
-import { StyleSheet, View, Text, ScrollView, Pressable, TextInput } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, Pressable } from 'react-native';
 import { TabBarIcon } from '@/components/navigation/TabBarIcon';
-import Modal from 'react-native-modal'
-import { useState, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useState } from 'react';
 import { HeroSection } from '@/components/HeroSection';
 import { useGlobalState } from '@/hooks/useGlobalState';
-import { generateUniqueId, getCurrentDateTime } from '@/function';
 import CardList from '@/components/home/CardList';
-import BaseInput from '@/components/input/BaseInput';
-import BaseInputWithIcon from '@/components/input/BaseInputWithIcon';
+import CheckBox from '@/components/CheckBox';
+import ModalForm from '@/components/home/ModalForm';
+
+import AsyncStorage from "@react-native-async-storage/async-storage"
+import { cashFormated } from '@/function';
 
 export default function HomeScreen() {
-  const [isModalVisible, setModalVisible] = useState(false);
-  const [cashActionText, setCashActionText] = useState('')
+  const [isModalFormVisible, setIsModalFormVisible] = useGlobalState('isModalFormVisible')
+  const [cashActionText, setCashActionText] = useGlobalState('cashActionText')
   const [allDataCash, setAllDataCash] = useGlobalState('allDataCash')
-  const [totalCash, setTotalCash] = useGlobalState('totalCash')
+  const [typeCash, setTypeCash] = useGlobalState('typeCash')
 
-  const [typeCash, setTypeCash] = useState('')
-  const [note, setNote] = useState<string>('')
-  const [amountCash, setAmountCash] = useState('')
+  const [isFilterIncome, setIsFilterIncome] = useState(false)
+  const [isFilterSpending, setIsFilterSpending] = useState(false)
 
-  const [isValidNote, setIsValidNote] = useState<boolean>(true)
-  const [isValidAmountCash, setIsValidAmountCash] = useState<boolean>(true)
+  // filter
+  const [totalCashFilter, setTotalCashFilter] = useState<number>()
+  const [isShowFilterContainer, setIsShowFilterContainer] = useState<boolean>(false)
 
-  const showModalandSetType = (actionType = '', typeCash: string) => {
+  const showModalandSetType = (actionType = '', typeCash: 'income' | 'spending') => {
     setCashActionText(actionType)
     setTypeCash(typeCash)
     toggleModal()
   }
 
-  const closeModal = () => {
-    setAmountCash('')
-    setNote('')
-    setIsValidNote(true)
-    setIsValidAmountCash(true)
-    toggleModal()
-  }
-
   const toggleModal = () => {
-    setModalVisible(!isModalVisible);
+    setIsModalFormVisible(!isModalFormVisible);
   };
 
-  const actionForCashFlow = () => {
-    const id = generateUniqueId()
-    const currentTime = getCurrentDateTime()
-
-    !note ? setIsValidNote(false) : setIsValidNote(true)
-    !amountCash ? setIsValidAmountCash(false) : setIsValidAmountCash(true)
-
-    if (note && amountCash) {
-      // remove "," in amount cash from input
-      const unformattedAmount = amountCash.replace(/,/g, '');
-
-      const data = {
-        id: id,
-        amount: Number(unformattedAmount),
-        type: typeCash,
-        created_at: currentTime,
-        note: note,
-      }
-
-      addNewDataCash(data)
-      closeModal()
+  const filtered = (filterType: 'income' | 'spending') => {
+    if (filterType === 'income') {
+      setIsFilterIncome(!isFilterIncome)
+      isFilterSpending ? setIsFilterSpending(false) : null
+      isFilterIncome ? setTotalCashFilter(0) : getAllDataCashForFilter('income')
     }
+
+    if (filterType === 'spending') {
+      setIsFilterSpending(!isFilterSpending)
+      isFilterIncome ? setIsFilterIncome(false) : null
+      isFilterSpending ? setTotalCashFilter(0) : getAllDataCashForFilter('spending')
+    }
+
   }
-
-  const addNewDataCash = async (newData: any) => {
-    const value = await AsyncStorage.getItem('cash');
-    let cashData = [];
-
-    if (value === null || value === '') {
-      // add data for first time
-      const jsonValue = JSON.stringify(newData)
-      await AsyncStorage.setItem('cash', jsonValue)
-    } else {
-      // update data
-      cashData = JSON.parse(value);
-    }
-
-    // cashData.push(newData);
-    cashData.unshift(newData)
-
-    // save array data in AsyncStorage
-    const jsonValue = JSON.stringify(cashData);
-    await AsyncStorage.setItem('cash', jsonValue);
-
-    getAllDataCash()
-  };
-
-  const getAllDataCash = async () => {
+  
+  
+  const getAllDataCashForFilter = async (filterType: 'income' | 'spending') => {
     const value = await AsyncStorage.getItem('cash');
 
     if (value) {
       const jsonValue = JSON.parse(value);
-      setAllDataCash(jsonValue)
 
-      // save total cash in global state
       const total = jsonValue.reduce((acc: number, item: any) => {
-        if (item.type === "spending") {
-          return acc - item.amount;
-        } else if (item.type === "income") {
+        if (filterType === 'income' && item.type === "income") {
+          return acc + item.amount;
+        }
+
+        if (filterType === 'spending' && item.type === 'spending') {
           return acc + item.amount;
         }
         return acc;
       }, 0);
 
-      setTotalCash(total)
+      setTotalCashFilter(total)
     }
   }
-  
-  useEffect(() => {
-    getAllDataCash()
-  }, [])
+
 
   return (
     <ScrollView>
 
-      {/* ===== MODAL START ===== */}
-      <Modal isVisible={isModalVisible}>
-        <View style={styles.modalContainer}>
-          <View style={{display: 'flex', justifyContent: 'flex-end', flexDirection: 'row', marginBottom: 20}}>
-            <Pressable onPress={closeModal}>
-              <TabBarIcon name={'close-circle'} />
-            </Pressable>
-          </View>
-
-          <BaseInput
-            label='note'
-            placeholder='typing here'
-            value={note}
-            onChangeText={newText => setNote(newText)}
-            styleAdd={!isValidNote && styles.invalidInput}
-          />
-
-          <BaseInputWithIcon
-            icon='Rp' label='cash' placeholder='0'
-            keyboardType='numeric'
-            value={amountCash}
-            onChangeText={newAmount => {
-              let formattedAmount = newAmount.replace(/[^0-9]/g, '');
-              if (formattedAmount === '0') formattedAmount = '';
-              setAmountCash(formattedAmount.replace(/\B(?=(\d{3})+(?!\d))/g, ','));
-            }}
-            styleAdd={!isValidAmountCash && styles.invalidInput}
-
-          />
-
-          <Pressable
-            style={[styles.cashButton, cashActionText === 'Add Income' ? styles.bgGreen : styles.bgRed]}
-            onPress={actionForCashFlow}
-          >
-            <Text style={[styles.textWhite, {textAlign: 'center'}]}>{cashActionText}</Text>
-          </Pressable>
-
-        </View>
-      </Modal>
-      {/* ===== MODAL END ===== */}
+      {/* all function for get data cash in <ModalForm/> components */}
+      <ModalForm/>
 
       <HeroSection/>
       
@@ -163,11 +83,11 @@ export default function HomeScreen() {
         <View style={styles.cashButtonContainer}>
 
           <Pressable style={[styles.cashButton, styles.bgGreen]} onPress={() => showModalandSetType('Add Income', 'income')}>
-            <Text style={styles.textWhite}>Add Income</Text>
+            <Text style={styles.textWhite}>+ Pemasukan</Text>
           </Pressable>
 
           <Pressable style={[styles.cashButton, styles.bgRed]} onPress={() => showModalandSetType('Add Spending', 'spending')}>
-            <Text style={styles.textWhite}>Add Spending</Text>
+            <Text style={styles.textWhite}>+ Pengeluaran</Text>
           </Pressable>
 
         </View>
@@ -176,7 +96,42 @@ export default function HomeScreen() {
 
       {/* ===== CASH FLOW START ===== */}
       <View style={styles.container}>
-        <Text style={styles.textMenu}>Cash Flow</Text>
+
+        {/* title head & filter button navigation */}
+        <View style={{ marginBottom: 12, display: 'flex', justifyContent: 'space-between', flexDirection: 'row'}}>
+          <Text style={styles.textMenu}>Catatan Kas</Text>
+          <Pressable onPress={() => setIsShowFilterContainer(!isShowFilterContainer)} style={{display: 'flex', justifyContent: 'space-between', flexDirection: 'row', alignItems: 'center', gap: 8}}>
+            <TabBarIcon name='filter' size={22} />
+            <Text>Filter</Text>
+          </Pressable>
+        </View>
+
+        { isShowFilterContainer ? 
+          <View style={{ backgroundColor: '#dcdcde', borderRadius: 4, padding: 8, marginBottom: 12 }}>
+            <Text>Filter bedasarkan:</Text>
+
+            <View style={{paddingTop: 8}}>
+              <CheckBox
+                title='Pemasukan'
+                isChecked={isFilterIncome}
+                onPress={() => filtered('income')}
+              />
+              <CheckBox
+                title='Pengeluaran'
+                isChecked={isFilterSpending}
+                onPress={() => filtered('spending')}
+              />
+            </View>
+
+            <View>
+              <Text style={[styles.textDarkGray, styles.textLarge]}>
+                <TabBarIcon name={'wallet'} style={styles.iconWallet} />
+                {totalCashFilter ? cashFormated(totalCashFilter) : '0'}
+              </Text>
+            </View>
+          </View>
+        : null }
+
 
         { allDataCash ? allDataCash.map((data: any) => (
           <CardList
@@ -196,6 +151,10 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  iconWallet: {
+    fontSize: 20,
+    paddingRight: 8
+  },
   textWhite: {
     color: '#ffffff'
   },
@@ -222,6 +181,9 @@ const styles = StyleSheet.create({
   textGray: {
     color: '#545454'
   },
+  textDarkGray: {
+    color: '#383838'
+  },
   container: {
     paddingTop: 18,
     paddingBottom: 8,
@@ -232,7 +194,6 @@ const styles = StyleSheet.create({
     color: '#1c1c1c',
     fontSize: 16,
     fontWeight: 600,
-    marginBottom: 12
   },
   addBottom: {
     marginBottom: 18,
