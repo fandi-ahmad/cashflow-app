@@ -30,7 +30,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flexDirection: "row",
     marginBottom: 8,
-    marginRight: 'auto',
   },
   title: {
     fontSize: 16,

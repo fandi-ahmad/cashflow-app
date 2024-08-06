@@ -110,7 +110,7 @@ export default function HomeScreen() {
           <View style={{ backgroundColor: '#dcdcde', borderRadius: 4, padding: 8, marginBottom: 12 }}>
             <Text>Filter bedasarkan:</Text>
 
-            <View style={{paddingTop: 8}}>
+            <View style={{paddingTop: 8, display: 'flex', flexDirection: 'row', gap: 20}}>
               <CheckBox
                 title='Pemasukan'
                 isChecked={isFilterIncome}
