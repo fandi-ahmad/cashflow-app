@@ -9,6 +9,8 @@ import { generateUniqueId, getCurrentDateTime } from "@/function"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { useEffect } from "react"
 
+import { getAllDataCash, getAllDataCashByMonth, getAllDataCashByMonthType, getAllDataCashByType } from "@/function/dataCash"
+
 const ModalForm = () => {
   const [isModalFormVisible, setIsModalFormVisible] = useGlobalState('isModalFormVisible')
   const [cashActionText, setCashActionText] = useGlobalState('cashActionText')
@@ -22,12 +24,23 @@ const ModalForm = () => {
   const [isValidNote, setIsValidNote] = useState<boolean>(true)
   const [isValidAmountCash, setIsValidAmountCash] = useState<boolean>(true)
 
-  
+
+  // button active style
+  const [isFilterIncome, setIsFilterIncome] = useGlobalState('isFilterIncome')
+  const [isFilterSpending, setIsFilterSpending] = useGlobalState('isFilterSpending')
+
+  // for filter data
+  const [monthFilter, setMonthFilter] = useGlobalState('monthFilter')
+  const [yearFilter, setYearFilter] = useGlobalState('yearFilter')
+  const [typeCashFilter, setTypeCashFilter] = useGlobalState('typeCashFilter')
+  const [totalCashFilter, setTotalCashFilter] = useGlobalState('totalCashFilter')
+
   const closeModal = () => {
     setAmountCash('')
     setNote('')
     setIsValidNote(true)
     setIsValidAmountCash(true)
+    setTypeCash('')
     toggleModal()
   }
 
@@ -55,7 +68,7 @@ const ModalForm = () => {
     const jsonValue = JSON.stringify(cashData);
     await AsyncStorage.setItem('cash', jsonValue);
 
-    getAllDataCash()
+    getData()
   };
 
 
@@ -79,34 +92,41 @@ const ModalForm = () => {
       }
 
       addNewDataCash(data)
+      // setTypeCashFilter('')
+      // setIsFilterIncome(false)
+      // setIsFilterSpending(false)
       closeModal()
     }
   }
 
+
+  const getData = async () => {
+    let data
+
+    data = await getAllDataCash()
+    setTotalCash(data?.totalCash)
+
+    if (monthFilter && typeCashFilter) {
+      data = await getAllDataCashByMonthType(monthFilter, yearFilter, typeCashFilter)
+      setTotalCashFilter(data?.totalCashFilter)
+    }
+    
+    if (monthFilter && !typeCashFilter) {
+      data = await getAllDataCashByMonth(monthFilter, yearFilter)
+      setTotalCashFilter(data?.totalCashFilter)
+    }
+    
+    if (!monthFilter && typeCashFilter) {
+      data = await getAllDataCashByType(typeCashFilter)      
+      setTotalCashFilter(data?.totalCashFilter)
+    }
+    setAllDataCash(data?.data)
+  }
+
   useEffect(() => {
-    getAllDataCash()
+    getData()
   }, [])
 
-  const getAllDataCash = async () => {
-    const value = await AsyncStorage.getItem('cash');
-
-    if (value) {
-      const jsonValue = JSON.parse(value);
-      setAllDataCash(jsonValue)
-
-      // save total cash in global state
-      const total = jsonValue.reduce((acc: number, item: any) => {
-        if (item.type === "spending") {
-          return acc - item.amount;
-        } else if (item.type === "income") {
-          return acc + item.amount;
-        }
-        return acc;
-      }, 0);
-
-      setTotalCash(total)
-    }
-  }
 
   return (
     <Modal isVisible={isModalFormVisible}>
