@@ -24,11 +24,6 @@ const ModalForm = () => {
   const [isValidNote, setIsValidNote] = useState<boolean>(true)
   const [isValidAmountCash, setIsValidAmountCash] = useState<boolean>(true)
 
-
-  // button active style
-  const [isFilterIncome, setIsFilterIncome] = useGlobalState('isFilterIncome')
-  const [isFilterSpending, setIsFilterSpending] = useGlobalState('isFilterSpending')
-
   // for filter data
   const [monthFilter, setMonthFilter] = useGlobalState('monthFilter')
   const [yearFilter, setYearFilter] = useGlobalState('yearFilter')
@@ -73,31 +68,30 @@ const ModalForm = () => {
 
 
   const actionForCashFlow = () => {
-    const id = generateUniqueId()
-    const currentTime = getCurrentDateTime()
-
-    !note ? setIsValidNote(false) : setIsValidNote(true)
-    !amountCash ? setIsValidAmountCash(false) : setIsValidAmountCash(true)
-
-    if (note && amountCash) {
-      // remove "," in amount cash from input
-      const unformattedAmount = amountCash.replace(/,/g, '');
-
+    const id = generateUniqueId();
+    const currentTime = getCurrentDateTime();
+  
+    const trimmedNote = note.trim();  /* <-- check space */
+    const unformattedAmount = amountCash.replace(/,/g, '');
+    const numericAmount = Number(unformattedAmount);
+  
+    !trimmedNote ? setIsValidNote(false) : setIsValidNote(true);
+    (!numericAmount || numericAmount === 0) ? setIsValidAmountCash(false) : setIsValidAmountCash(true);
+  
+    if (trimmedNote && numericAmount > 0) {
       const data = {
         id: id,
-        amount: Number(unformattedAmount),
+        amount: numericAmount,
         type: typeCash,
         created_at: currentTime,
-        note: note,
-      }
-
-      addNewDataCash(data)
-      // setTypeCashFilter('')
-      // setIsFilterIncome(false)
-      // setIsFilterSpending(false)
-      closeModal()
+        note: trimmedNote,
+      };
+  
+      addNewDataCash(data);
+      closeModal();
     }
-  }
+  };
+  
 
 
   const getData = async () => {
