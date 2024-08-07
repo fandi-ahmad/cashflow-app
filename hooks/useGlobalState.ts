@@ -6,7 +6,13 @@ type stateType = {
   allDataCash: any,
   isModalFormVisible: boolean,
   cashActionText: string,
-  typeCash: 'income' | 'spending',
+  typeCash: 'income' | 'spending' | '',
+  typeCashFilter: 'income' | 'spending' | '',
+  monthFilter: string,
+  yearFilter: number,
+  totalCashFilter: number,
+  isFilterIncome: boolean,
+  isFilterSpending: boolean,
 }
 
 const initialState = <stateType> {
@@ -15,7 +21,19 @@ const initialState = <stateType> {
   allDataCash: [],
   isModalFormVisible: false,
   cashActionText: '',
-  typeCash: 'income',
+
+  // for create new data
+  typeCash: '',
+  
+  // for filter data
+  typeCashFilter: '',
+  monthFilter: '',
+  yearFilter: 0,
+  totalCashFilter: 0,
+
+  // button active style
+  isFilterIncome: false,
+  isFilterSpending: false,
 };
 const { useGlobalState } = createGlobalState(initialState);
 
