@@ -1,7 +1,7 @@
 import { TabBarIcon } from '@/components/navigation/TabBarIcon';
-import { StyleSheet, Text, View, ScrollView, Pressable } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, Pressable, Linking } from 'react-native';
 import Modal from 'react-native-modal'
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useGlobalState } from '@/hooks/useGlobalState';
 
@@ -15,11 +15,11 @@ const DeleteMessage = ({closeButton, deleteButton}: any) => {
       </View>
 
       <Text style={{ textAlign: 'center', fontSize: 18 }}>
-        Are you sure you want to delete all charge data?
+        Yakin ingin menghapus semua data kas?
       </Text>
 
       <Pressable onPress={deleteButton} style={[styles.baseButton, styles.bgRed]}>
-        <Text style={{color: 'white'}}>Yes, delete it</Text>
+        <Text style={{color: 'white'}}>Ya, hapus saja</Text>
       </Pressable>
     </View>
   )
@@ -28,7 +28,7 @@ const DeleteMessage = ({closeButton, deleteButton}: any) => {
 const WaitingMessage = () => {
   return (
     <Text id='waitingMessage' style={{ textAlign: 'center' }}>
-      Please Waiting ...
+      Tunggu sebentar ...
     </Text>
   )
 }
@@ -38,10 +38,10 @@ const SuccessMessage = ({backButton}: any) => {
     <View id='successMessage' style={{ display: 'flex', justifyContent: 'center' }}>
       <TabBarIcon name='checkmark-circle' style={{ fontSize: 52, color: '#1bb55b', margin: 'auto' }} />
       <Text style={{ textAlign: 'center', fontSize: 18 }}>
-        Delete data successfully
+        Data kas berhasil dihapus!
       </Text>
       <Pressable onPress={backButton} style={[styles.baseButton, styles.bgGray]}>
-        <Text style={{color: 'white'}}>Back</Text>
+        <Text style={{color: 'white'}}>Kembali</Text>
       </Pressable>
     </View>
   )
@@ -49,13 +49,14 @@ const SuccessMessage = ({backButton}: any) => {
 
 
 export default function AboutScreen() {
-  const [isModalVisible, setModalVisible] = useState<boolean>(false);
+  const [isModalDeleteVisible, setModalDeleteVisible] = useState<boolean>(false);
+  const [isModalAboutVisible, setIsModalAboutVisible] = useState<boolean>(false)
   const [modalType, setModalType] = useState<'delete' | 'waiting' | 'success'>('delete')
   const [allDataCash, setAllDataCash] = useGlobalState('allDataCash')
   const [totalCash, setTotalCash] = useGlobalState('totalCash')
 
   const toggleModal = () => {
-    setModalVisible(!isModalVisible);
+    setModalDeleteVisible(!isModalDeleteVisible);
   };
 
   const handleModalMessage = () => {
@@ -83,12 +84,36 @@ export default function AboutScreen() {
     setModalType('success')
   }
 
+  const url = 'https://fandi-ahmad.vercel.app/'
+  const handleClickProfile = useCallback(async () => {
+    const supported = await Linking.canOpenURL(url);
+    supported ? await Linking.openURL(url) : null
+  }, [url]);
+
   return (
     <ScrollView>
 
-      <Modal isVisible={isModalVisible}>
+      <Modal isVisible={isModalDeleteVisible}>
         <View style={styles.modalContainer}>
           {handleModalMessage()}
+        </View>
+      </Modal>
+
+      <Modal isVisible={isModalAboutVisible}>
+        <View style={styles.modalContainer}>
+          <View style={{display: 'flex', justifyContent: 'flex-end', flexDirection: 'row', marginBottom: 18}}>
+          <Pressable onPress={() => setIsModalAboutVisible(false)}>
+            <TabBarIcon name={'close-circle'} />
+          </Pressable>
+        </View>
+          <View>
+            <Text style={{fontSize: 20, fontWeight: 600, marginBottom: 18}}>Catatan Kas V.1.0.0</Text>
+            <Text style={{marginBottom: 6}}>Aplikasi ini dibuat untuk mencatat kas masuk dan keluar.</Text>
+            <Text style={{marginBottom: 24}}>Dikembangkan oleh Fandi Ahmad</Text>
+            <Pressable onPress={handleClickProfile}>
+              <Text style={{color: '#3b4bf7', textDecorationLine: 'underline'}}>Kunjungi profil pengembang</Text>
+            </Pressable>
+          </View>
         </View>
       </Modal>
 
@@ -99,7 +124,11 @@ export default function AboutScreen() {
         <View>
           <Pressable onPress={openModalDelete} style={styles.listMenu}>
             <TabBarIcon name={'trash'} style={styles.listIcon} />
-            <Text>Delete All Data Cash</Text>
+            <Text>Hapus semua data kas</Text>
+          </Pressable>
+          <Pressable onPress={() => setIsModalAboutVisible(true)} style={styles.listMenu}>
+            <TabBarIcon name={'information-circle'} style={styles.listIcon} />
+            <Text>Tentang</Text>
           </Pressable>
         </View>  
       
