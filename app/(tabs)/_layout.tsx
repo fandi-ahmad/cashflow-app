@@ -18,7 +18,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: 'Utama',
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon name={focused ? 'home' : 'home-outline'} color={color} />
           ),
@@ -28,9 +28,9 @@ export default function TabLayout() {
       <Tabs.Screen
         name="about"
         options={{
-          title: 'About',
+          title: 'Lainnya',
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={'information-circle'} color={color} />
+            <TabBarIcon name={'ellipsis-horizontal-circle'} color={color} />
           ),
         }}
       />
