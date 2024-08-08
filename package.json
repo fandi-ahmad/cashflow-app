@@ -1,5 +1,5 @@
 {
-  "name": "cash-flow-notes-app",
+  "name": "Catatan Kas",
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
